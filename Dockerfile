@@ -28,7 +28,7 @@ RUN DEBIAN_FRONTEND=noninteractive \
     --enable-gtk-doc-html=no \
     --enable-gtk-doc=no \
     --enable-pyvips8=no && \
-  make && \
+  make -j 4 && \
   make install && \
   ldconfig
 

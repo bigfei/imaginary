@@ -52,6 +52,7 @@ var (
 	aCpus               = flag.Int("cpus", runtime.GOMAXPROCS(-1), "Number of cpu cores to use")
 	aLogLevel           = flag.String("log-level", "info", "Define log level for http-server. E.g: info,warning,error")
 	aReturnSize         = flag.Bool("return-size", false, "Return the image size in the HTTP headers")
+	aReferrerPolicy     = flag.String("referrer-policy", "no", "How to set the HTTP Referer header when requesting image from HTTP. E.g: no, origin, unsafe, url-host, url-dir")
 )
 
 const usage = `imaginary %s
@@ -110,6 +111,7 @@ Options:
   -log-level                 Set log level for http-server. E.g: info,warning,error [default: info].
                              Or can use the environment variable GOLANG_LOG=info.
   -return-size               Return the image size with X-Width and X-Height HTTP header. [default: disabled].
+  -referrer-policy           How to set the HTTP Referer header when requesting image from HTTP. E.g: no, origin, unsafe, url-host, url-dir. [default: no].
 `
 
 type URLSignature struct {
@@ -163,6 +165,7 @@ func main() {
 		MaxAllowedPixels:   *aMaxAllowedPixels,
 		LogLevel:           getLogLevel(*aLogLevel),
 		ReturnSize:         *aReturnSize,
+		ReferrerPolicy:     *aReferrerPolicy,
 	}
 
 	// Show warning if gzip flag is passed

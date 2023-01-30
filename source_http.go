@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
 	"strings"
 )
@@ -95,6 +96,22 @@ func (s *HTTPImageSource) setForwardHeaders(req *http.Request, ireq *http.Reques
 	}
 }
 
+func (s *HTTPImageSource) setRefererHeader(req *http.Request, ireq *http.Request, url *url.URL) {
+	referrerPolicy := s.Config.ReferrerPolicy
+	switch referrerPolicy {
+	case "url-host":
+		req.Header.Set("Referer", url.Scheme+"://"+url.Host)
+	case "url-dir":
+		req.Header.Set("Referer", url.Scheme+"://"+url.Host+path.Dir(url.Path))
+	case "origin":
+		req.Header.Set("Referer", ireq.URL.Scheme+"://"+ireq.Host)
+	case "unsafe":
+		req.Header.Set("Referer", ireq.Referer())
+	default:
+		break
+	}
+}
+
 func parseURL(request *http.Request) (*url.URL, error) {
 	return url.Parse(request.URL.Query().Get(URLQueryKey))
 }
@@ -111,6 +128,10 @@ func newHTTPRequest(s *HTTPImageSource, ireq *http.Request, method string, url *
 	// Forward auth header to the target server, if necessary
 	if s.Config.AuthForwarding || s.Config.Authorization != "" {
 		s.setAuthorizationHeader(req, ireq)
+	}
+
+	if s.Config.ReferrerPolicy != "" {
+		s.setRefererHeader(req, ireq, url)
 	}
 
 	return req

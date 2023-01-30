@@ -241,6 +241,113 @@ func TestHttpImageSourceEmptyForwardedHeaders(t *testing.T) {
 	}
 }
 
+func TestHttpImageSourceNoReferrerHeader(t *testing.T) {
+	policy := "no"
+
+	u := "http://bar.com/a/img"
+	u1, _ := url.Parse(u)
+
+	r, _ := http.NewRequest(http.MethodGet, "http://foo.com/bar?url="+u, nil)
+	r.Header.Set("Referer", "http://foo")
+
+	source := &HTTPImageSource{&SourceConfig{ReferrerPolicy: policy}}
+	if !source.Matches(r) {
+		t.Fatal("Cannot match the request")
+	}
+
+	oreq := &http.Request{Header: make(http.Header)}
+	source.setRefererHeader(oreq, r, u1)
+
+	if oreq.Header.Get("Referer") != "" {
+		t.Fatal("Mismatch Referer header, should be empty")
+	}
+}
+
+func TestHttpImageSourceUnsafeReferrerHeader(t *testing.T) {
+	policy := "unsafe"
+
+	u := "http://bar.com/a/img"
+	u1, _ := url.Parse(u)
+
+	r, _ := http.NewRequest(http.MethodGet, "http://foo.com/bar?url="+u, nil)
+	r.Header.Set("Referer", "http://foo")
+
+	source := &HTTPImageSource{&SourceConfig{ReferrerPolicy: policy}}
+	if !source.Matches(r) {
+		t.Fatal("Cannot match the request")
+	}
+
+	oreq := &http.Request{Header: make(http.Header)}
+	source.setRefererHeader(oreq, r, u1)
+
+	if oreq.Header.Get("Referer") != "http://foo" {
+		t.Fatalf("Mismatch Referer header, should be %s", "http://foo")
+	}
+}
+
+func TestHttpImageSourceOriginReferrerHeader(t *testing.T) {
+	policy := "origin"
+	u := "http://bar.com/a/img"
+	u1, _ := url.Parse(u)
+
+	r, _ := http.NewRequest(http.MethodGet, "http://foo.com/bar?url="+u, nil)
+	r.Header.Set("Referer", "http://foo")
+
+	source := &HTTPImageSource{&SourceConfig{ReferrerPolicy: policy}}
+	if !source.Matches(r) {
+		t.Fatal("Cannot match the request")
+	}
+
+	oreq := &http.Request{Header: make(http.Header)}
+	source.setRefererHeader(oreq, r, u1)
+
+	if oreq.Header.Get("Referer") != "http://foo.com" {
+		t.Fatalf("Mismatch Referer header, should be %s", "http://foo.com")
+	}
+}
+
+func TestHttpImageSourceUrlHostReferrerHeader(t *testing.T) {
+	policy := "url-host"
+	u := "http://bar.com/a/img"
+	u1, _ := url.Parse(u)
+
+	r, _ := http.NewRequest(http.MethodGet, "http://foo.com/bar?url="+u, nil)
+	r.Header.Set("Referer", "http://foo")
+
+	source := &HTTPImageSource{&SourceConfig{ReferrerPolicy: policy}}
+	if !source.Matches(r) {
+		t.Fatal("Cannot match the request")
+	}
+
+	oreq := &http.Request{Header: make(http.Header)}
+	source.setRefererHeader(oreq, r, u1)
+
+	if oreq.Header.Get("Referer") != "http://bar.com" {
+		t.Fatalf("Mismatch Referer header, should be %s", "http://bar.com")
+	}
+}
+
+func TestHttpImageSourceUrlDirReferrerHeader(t *testing.T) {
+	policy := "url-dir"
+	u := "http://bar.com/a/img"
+	u1, _ := url.Parse(u)
+
+	r, _ := http.NewRequest(http.MethodGet, "http://foo.com/bar?url="+u, nil)
+	r.Header.Set("Referer", "http://foo")
+
+	source := &HTTPImageSource{&SourceConfig{ReferrerPolicy: policy}}
+	if !source.Matches(r) {
+		t.Fatal("Cannot match the request")
+	}
+
+	oreq := &http.Request{Header: make(http.Header)}
+	source.setRefererHeader(oreq, r, u1)
+
+	if oreq.Header.Get("Referer") != "http://bar.com/a" {
+		t.Fatalf("Mismatch Referer header, should be %s", "http://bar.com/a")
+	}
+}
+
 func TestHttpImageSourceError(t *testing.T) {
 	var err error
 
