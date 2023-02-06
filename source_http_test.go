@@ -10,6 +10,7 @@ import (
 
 const fixtureImage = "testdata/large.jpg"
 const fixture1024Bytes = "testdata/1024bytes"
+const fixturePolicyFile = "testdata/policy.yaml"
 
 func TestHttpImageSource(t *testing.T) {
 	var body []byte
@@ -242,7 +243,9 @@ func TestHttpImageSourceEmptyForwardedHeaders(t *testing.T) {
 }
 
 func TestHttpImageSourceNoReferrerHeader(t *testing.T) {
-	policy := "no"
+	policy := ReferrerPolicy{
+		Default: NoReferrer,
+	}
 
 	u := "http://bar.com/a/img"
 	u1, _ := url.Parse(u)
@@ -264,7 +267,9 @@ func TestHttpImageSourceNoReferrerHeader(t *testing.T) {
 }
 
 func TestHttpImageSourceUnsafeReferrerHeader(t *testing.T) {
-	policy := "unsafe"
+	policy := ReferrerPolicy{
+		Default: UnsafeReferrer,
+	}
 
 	u := "http://bar.com/a/img"
 	u1, _ := url.Parse(u)
@@ -286,7 +291,9 @@ func TestHttpImageSourceUnsafeReferrerHeader(t *testing.T) {
 }
 
 func TestHttpImageSourceOriginReferrerHeader(t *testing.T) {
-	policy := "origin"
+	policy := ReferrerPolicy{
+		Default: OriginReferrer,
+	}
 	u := "http://bar.com/a/img"
 	u1, _ := url.Parse(u)
 
@@ -307,7 +314,9 @@ func TestHttpImageSourceOriginReferrerHeader(t *testing.T) {
 }
 
 func TestHttpImageSourceUrlHostReferrerHeader(t *testing.T) {
-	policy := "url-host"
+	policy := ReferrerPolicy{
+		Default: UrlHostReferrer,
+	}
 	u := "http://bar.com/a/img"
 	u1, _ := url.Parse(u)
 
@@ -328,7 +337,9 @@ func TestHttpImageSourceUrlHostReferrerHeader(t *testing.T) {
 }
 
 func TestHttpImageSourceUrlDirReferrerHeader(t *testing.T) {
-	policy := "url-dir"
+	policy := ReferrerPolicy{
+		Default: UrlDirReferrer,
+	}
 	u := "http://bar.com/a/img"
 	u1, _ := url.Parse(u)
 
@@ -347,6 +358,10 @@ func TestHttpImageSourceUrlDirReferrerHeader(t *testing.T) {
 		t.Fatalf("Mismatch Referer header, should be %s", "http://bar.com/a")
 	}
 }
+
+//func TestHttpImageSourceSiteFileReferrerHeader(t *testing.T) {
+//
+//}
 
 func TestHttpImageSourceError(t *testing.T) {
 	var err error

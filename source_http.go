@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 )
@@ -97,18 +98,28 @@ func (s *HTTPImageSource) setForwardHeaders(req *http.Request, ireq *http.Reques
 }
 
 func (s *HTTPImageSource) setRefererHeader(req *http.Request, ireq *http.Request, url *url.URL) {
-	referrerPolicy := s.Config.ReferrerPolicy
-	switch referrerPolicy {
-	case "url-host":
+	policy := s.Config.ReferrerPolicy
+	if len(policy.Sites) != 0 {
+		for _, site := range policy.Sites {
+			match, err := filepath.Match(url.String(), site.URL)
+			if err != nil {
+				return
+			}
+			if match {
+				req.Header.Set("Referer", site.Refer)
+				return
+			}
+		}
+	}
+	switch policy.Default {
+	case UrlHostReferrer:
 		req.Header.Set("Referer", url.Scheme+"://"+url.Host)
-	case "url-dir":
+	case UrlDirReferrer:
 		req.Header.Set("Referer", url.Scheme+"://"+url.Host+path.Dir(url.Path))
-	case "origin":
+	case OriginReferrer:
 		req.Header.Set("Referer", ireq.URL.Scheme+"://"+ireq.Host)
-	case "unsafe":
+	case UnsafeReferrer:
 		req.Header.Set("Referer", ireq.Referer())
-	default:
-		break
 	}
 }
 
@@ -130,7 +141,7 @@ func newHTTPRequest(s *HTTPImageSource, ireq *http.Request, method string, url *
 		s.setAuthorizationHeader(req, ireq)
 	}
 
-	if s.Config.ReferrerPolicy != "" {
+	if s.Config.ReferrerPolicy.Default != "" {
 		s.setRefererHeader(req, ireq, url)
 	}
 

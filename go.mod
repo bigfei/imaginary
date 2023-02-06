@@ -7,5 +7,7 @@ require (
 	github.com/h2non/filetype v1.1.3
 	github.com/rs/cors v1.8.3
 	gopkg.in/throttled/throttled.v2 v2.9.1
+	gopkg.in/yaml.v2 v2.4.0 // indirect
 )
-replace  gopkg.in/throttled/throttled.v2 v2.9.1  => github.com/throttled/throttled/v2 v2.9.1
+
+replace gopkg.in/throttled/throttled.v2 v2.9.1 => github.com/throttled/throttled/v2 v2.9.1

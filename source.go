@@ -16,7 +16,7 @@ type SourceConfig struct {
 	ForwardHeaders []string
 	AllowedOrigins []*url.URL
 	MaxAllowedSize int
-	ReferrerPolicy string
+	ReferrerPolicy ReferrerPolicy
 }
 
 var imageSourceMap = make(map[ImageSourceType]ImageSource)

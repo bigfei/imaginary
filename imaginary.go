@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"gopkg.in/yaml.v2"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/url"
@@ -52,7 +54,7 @@ var (
 	aCpus               = flag.Int("cpus", runtime.GOMAXPROCS(-1), "Number of cpu cores to use")
 	aLogLevel           = flag.String("log-level", "info", "Define log level for http-server. E.g: info,warning,error")
 	aReturnSize         = flag.Bool("return-size", false, "Return the image size in the HTTP headers")
-	aReferrerPolicy     = flag.String("referrer-policy", "no", "How to set the HTTP Referer header when requesting image from HTTP. E.g: no, origin, unsafe, url-host, url-dir")
+	aReferrerPolicy     = flag.String("referrer-policy", "no", "How to set the HTTP Referer header when requesting image from HTTP. E.g: no, origin, unsafe, url-host, url-dir, site-file(a YAML config file)")
 )
 
 const usage = `imaginary %s
@@ -111,7 +113,7 @@ Options:
   -log-level                 Set log level for http-server. E.g: info,warning,error [default: info].
                              Or can use the environment variable GOLANG_LOG=info.
   -return-size               Return the image size with X-Width and X-Height HTTP header. [default: disabled].
-  -referrer-policy           How to set the HTTP Referer header when requesting image from HTTP. E.g: no, origin, unsafe, url-host, url-dir. [default: no].
+  -referrer-policy           How to set the HTTP Referer header when requesting image from HTTP. E.g: no, origin, unsafe, url-host, url-dir, site-file(a YAML config file). [default: no].
 `
 
 type URLSignature struct {
@@ -165,7 +167,7 @@ func main() {
 		MaxAllowedPixels:   *aMaxAllowedPixels,
 		LogLevel:           getLogLevel(*aLogLevel),
 		ReturnSize:         *aReturnSize,
-		ReferrerPolicy:     *aReferrerPolicy,
+		ReferrerPolicy:     parseReferrerPolicy(*aReferrerPolicy),
 	}
 
 	// Show warning if gzip flag is passed
@@ -254,6 +256,58 @@ func getLogLevel(logLevel string) string {
 		logLevel = logLevelEnv
 	}
 	return logLevel
+}
+
+var (
+	// DefaultConfigFiles is the file names from which we attempt to read configuration.
+	DefaultConfigFiles = []string{"config.yml", "config.yaml"}
+
+	// DefaultUnixConfigLocation is the primary location to find a config file
+	DefaultUnixConfigLocation = "/usr/local/etc/imaginary"
+
+	// Launchd doesn't set root env variables, so there is default
+	// Windows default config dir was ~/cloudflare-warp in documentation; let's keep it compatible
+	defaultNixConfigDirs = []string{"/etc/imaginary", DefaultUnixConfigLocation}
+
+	ErrNoConfigFile = fmt.Errorf("Cannot determine default configuration path. No file %v in %v", DefaultConfigFiles, defaultNixConfigDirs)
+)
+
+func parseReferrerPolicy(s string) ReferrerPolicy {
+	defaultPolicy := NoReferrer
+	policy := ReferrerPolicy{
+		Default: defaultPolicy,
+	}
+
+	switch s {
+	case UrlHostReferrer:
+		policy.Default = UrlHostReferrer
+	case UrlDirReferrer:
+		policy.Default = UrlDirReferrer
+	case OriginReferrer:
+		policy.Default = OriginReferrer
+	case UnsafeReferrer:
+		policy.Default = UnsafeReferrer
+	case NoReferrer:
+		policy.Default = NoReferrer
+	default:
+		file, err := os.Open(s)
+		if err != nil {
+			// If does not exist and config file was not specificly specified then return ErrNoConfigFile found.
+			if os.IsNotExist(err) {
+				err = ErrNoConfigFile
+			}
+			log.Fatalf("Configuration file %s was not existed", s)
+		}
+		defer file.Close()
+		if err := yaml.NewDecoder(file).Decode(&policy); err != nil {
+			if err == io.EOF {
+				log.Fatalf("Configuration file %s was empty", s)
+				return policy
+			}
+			log.Fatalf("error parsing YAML in config file at "+s+"with error: %s", err)
+		}
+	}
+	return policy
 }
 
 func showUsage() {
