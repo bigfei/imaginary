@@ -1,6 +1,7 @@
 package main
 
 import (
+	"gopkg.in/yaml.v2"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
@@ -10,7 +11,7 @@ import (
 
 const fixtureImage = "testdata/large.jpg"
 const fixture1024Bytes = "testdata/1024bytes"
-const fixturePolicyFile = "testdata/policy.yaml"
+const fixturePolicyFile = "testdata/policy.yml"
 
 func TestHttpImageSource(t *testing.T) {
 	var body []byte
@@ -359,9 +360,61 @@ func TestHttpImageSourceUrlDirReferrerHeader(t *testing.T) {
 	}
 }
 
-//func TestHttpImageSourceSiteFileReferrerHeader(t *testing.T) {
-//
-//}
+func TestHttpImageSourceSiteFileReferrerHeaderReadFromYamlFile(t *testing.T) {
+	// Read the YAML file into memory
+	data, err := ioutil.ReadFile(fixturePolicyFile)
+	if err != nil {
+		t.Errorf("Error reading YAML file: %v", err)
+	}
+
+	// Parse the YAML data into a ReferrerPolicy struct
+	var policy ReferrerPolicy
+	err = yaml.Unmarshal(data, &policy)
+	if err != nil {
+		t.Errorf("Error parsing YAML data: %v", err)
+	}
+
+	tests := []struct {
+		name          string
+		url           string
+		expectedRefer string
+	}{
+		{
+			name:          "single match",
+			url:           "http://tva1.moyu.im/a/img",
+			expectedRefer: "http://i.jandan.net",
+		},
+		{
+			name:          "wildcard match",
+			url:           "http://tva2.moyu.im/a/img",
+			expectedRefer: "http://jandan.net",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			u := tt.url
+			u1, _ := url.Parse(u)
+
+			r, _ := http.NewRequest(http.MethodGet, "http://foo.com/bar?url="+u, nil)
+			r.Header.Set("Referer", "http://foo")
+
+			source := &HTTPImageSource{&SourceConfig{ReferrerPolicy: policy}}
+			if !source.Matches(r) {
+				t.Fatal("Cannot match the request")
+			}
+
+			oreq := &http.Request{Header: make(http.Header)}
+			source.setRefererHeader(oreq, r, u1)
+
+			if oreq.Header.Get("Referer") != tt.expectedRefer {
+				t.Fatalf("Mismatch Referer header, should be %s, but %s", tt.expectedRefer, oreq.Header.Get("Referer"))
+			}
+
+		})
+	}
+
+}
 
 func TestHttpImageSourceError(t *testing.T) {
 	var err error

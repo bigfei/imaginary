@@ -139,6 +139,11 @@ func main() {
 	port := getPort(*aPort)
 	urlSignature := getURLSignature(*aURLSignatureKey)
 
+	referrerPolicy, err := parseReferrerPolicy(*aReferrerPolicy)
+	if err != nil {
+		log.Printf("ReferrerPolicy Config errors: %s", err)
+	}
+
 	opts := ServerOptions{
 		Port:               port,
 		Address:            *aAddr,
@@ -167,7 +172,7 @@ func main() {
 		MaxAllowedPixels:   *aMaxAllowedPixels,
 		LogLevel:           getLogLevel(*aLogLevel),
 		ReturnSize:         *aReturnSize,
-		ReferrerPolicy:     parseReferrerPolicy(*aReferrerPolicy),
+		ReferrerPolicy:     referrerPolicy,
 	}
 
 	// Show warning if gzip flag is passed
@@ -262,17 +267,10 @@ var (
 	// DefaultConfigFiles is the file names from which we attempt to read configuration.
 	DefaultConfigFiles = []string{"config.yml", "config.yaml"}
 
-	// DefaultUnixConfigLocation is the primary location to find a config file
-	DefaultUnixConfigLocation = "/usr/local/etc/imaginary"
-
-	// Launchd doesn't set root env variables, so there is default
-	// Windows default config dir was ~/cloudflare-warp in documentation; let's keep it compatible
-	defaultNixConfigDirs = []string{"/etc/imaginary", DefaultUnixConfigLocation}
-
-	ErrNoConfigFile = fmt.Errorf("Cannot determine default configuration path. No file %v in %v", DefaultConfigFiles, defaultNixConfigDirs)
+	ErrNoConfigFile = fmt.Errorf("Cannot determine default configuration path. No file %v ", DefaultConfigFiles)
 )
 
-func parseReferrerPolicy(s string) ReferrerPolicy {
+func parseReferrerPolicy(s string) (ReferrerPolicy, error) {
 	defaultPolicy := NoReferrer
 	policy := ReferrerPolicy{
 		Default: defaultPolicy,
@@ -296,18 +294,17 @@ func parseReferrerPolicy(s string) ReferrerPolicy {
 			if os.IsNotExist(err) {
 				err = ErrNoConfigFile
 			}
-			log.Fatalf("Configuration file %s was not existed", s)
+			return policy, fmt.Errorf("referrer policy file %s was not existed", s)
 		}
 		defer file.Close()
 		if err := yaml.NewDecoder(file).Decode(&policy); err != nil {
 			if err == io.EOF {
-				log.Fatalf("Configuration file %s was empty", s)
-				return policy
+				return policy, fmt.Errorf("referrer policy file %s was empty", s)
 			}
-			log.Fatalf("error parsing YAML in config file at "+s+"with error: %s", err)
+			return policy, fmt.Errorf("error parsing YAML in referrer policy file at "+s+"with error: %s", err)
 		}
 	}
-	return policy
+	return policy, nil
 }
 
 func showUsage() {

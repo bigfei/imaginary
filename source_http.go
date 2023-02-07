@@ -101,12 +101,12 @@ func (s *HTTPImageSource) setRefererHeader(req *http.Request, ireq *http.Request
 	policy := s.Config.ReferrerPolicy
 	if len(policy.Sites) != 0 {
 		for _, site := range policy.Sites {
-			match, err := filepath.Match(url.String(), site.URL)
+			match, err := filepath.Match(site.URL, url.Host)
 			if err != nil {
 				return
 			}
 			if match {
-				req.Header.Set("Referer", site.Refer)
+				req.Header.Set("Referer", url.Scheme+"://"+site.Refer)
 				return
 			}
 		}
@@ -141,7 +141,7 @@ func newHTTPRequest(s *HTTPImageSource, ireq *http.Request, method string, url *
 		s.setAuthorizationHeader(req, ireq)
 	}
 
-	if s.Config.ReferrerPolicy.Default != "" {
+	if s.Config.ReferrerPolicy.Default != NoReferrer {
 		s.setRefererHeader(req, ireq, url)
 	}
 
