@@ -55,9 +55,8 @@ const (
 	NoReferrer      = "no"
 	OriginReferrer  = "origin"
 	UnsafeReferrer  = "unsafe"
-	UrlHostReferrer = "url-host"
-	UrlDirReferrer  = "url-dir"
-	SiteReferrer    = "site"
+	URLHostReferrer = "url-host"
+	URLDirReferrer  = "url-dir"
 )
 
 type ReferrerSite struct {
@@ -69,7 +68,6 @@ type ReferrerPolicy struct {
 	Default string         `yaml:"default"`
 	Sites   []ReferrerSite `yaml:"sites"`
 }
-
 
 // IsValid validates if a given HTTP request endpoint is valid or not.
 func (e Endpoints) IsValid(r *http.Request) bool {

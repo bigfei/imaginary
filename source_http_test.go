@@ -316,7 +316,7 @@ func TestHttpImageSourceOriginReferrerHeader(t *testing.T) {
 
 func TestHttpImageSourceUrlHostReferrerHeader(t *testing.T) {
 	policy := ReferrerPolicy{
-		Default: UrlHostReferrer,
+		Default: URLHostReferrer,
 	}
 	u := "http://bar.com/a/img"
 	u1, _ := url.Parse(u)
@@ -339,7 +339,7 @@ func TestHttpImageSourceUrlHostReferrerHeader(t *testing.T) {
 
 func TestHttpImageSourceUrlDirReferrerHeader(t *testing.T) {
 	policy := ReferrerPolicy{
-		Default: UrlDirReferrer,
+		Default: URLDirReferrer,
 	}
 	u := "http://bar.com/a/img"
 	u1, _ := url.Parse(u)

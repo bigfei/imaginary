@@ -263,13 +263,6 @@ func getLogLevel(logLevel string) string {
 	return logLevel
 }
 
-var (
-	// DefaultConfigFiles is the file names from which we attempt to read configuration.
-	DefaultConfigFiles = []string{"config.yml", "config.yaml"}
-
-	ErrNoConfigFile = fmt.Errorf("Cannot determine default configuration path. No file %v ", DefaultConfigFiles)
-)
-
 func parseReferrerPolicy(s string) (ReferrerPolicy, error) {
 	defaultPolicy := NoReferrer
 	policy := ReferrerPolicy{
@@ -277,10 +270,10 @@ func parseReferrerPolicy(s string) (ReferrerPolicy, error) {
 	}
 
 	switch s {
-	case UrlHostReferrer:
-		policy.Default = UrlHostReferrer
-	case UrlDirReferrer:
-		policy.Default = UrlDirReferrer
+	case URLHostReferrer:
+		policy.Default = URLHostReferrer
+	case URLDirReferrer:
+		policy.Default = URLDirReferrer
 	case OriginReferrer:
 		policy.Default = OriginReferrer
 	case UnsafeReferrer:
@@ -292,9 +285,9 @@ func parseReferrerPolicy(s string) (ReferrerPolicy, error) {
 		if err != nil {
 			// If does not exist and config file was not specificly specified then return ErrNoConfigFile found.
 			if os.IsNotExist(err) {
-				err = ErrNoConfigFile
+				return policy, fmt.Errorf("referrer policy file %s is not existed", s)
 			}
-			return policy, fmt.Errorf("referrer policy file %s was not existed", s)
+			return policy, fmt.Errorf("referrer policy file %s cannot be opened because %s ", s, err)
 		}
 		defer file.Close()
 		if err := yaml.NewDecoder(file).Decode(&policy); err != nil {

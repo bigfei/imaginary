@@ -112,9 +112,9 @@ func (s *HTTPImageSource) setRefererHeader(req *http.Request, ireq *http.Request
 		}
 	}
 	switch policy.Default {
-	case UrlHostReferrer:
+	case URLHostReferrer:
 		req.Header.Set("Referer", url.Scheme+"://"+url.Host)
-	case UrlDirReferrer:
+	case URLDirReferrer:
 		req.Header.Set("Referer", url.Scheme+"://"+url.Host+path.Dir(url.Path))
 	case OriginReferrer:
 		req.Header.Set("Referer", ireq.URL.Scheme+"://"+ireq.Host)
