@@ -95,6 +95,8 @@ ENV PORT 9000
 # Drop privileges for non-UID mapped environments
 USER nobody
 
+VOLUME /config
+
 # Run the entrypoint command by default when the container starts.
 ENTRYPOINT ["/usr/local/bin/imaginary"]
 
