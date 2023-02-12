@@ -70,7 +70,7 @@ func determineAcceptMimeType(accept string) string {
 		switch mediaType {
 		case "image/webp":
 			return "webp"
-		//case "image/avif":
+		// case "image/avif":
 		//	return "avif"
 		case "image/png":
 			return "png"
