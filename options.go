@@ -168,10 +168,5 @@ func BimgOptions(o ImageOptions) bimg.Options {
 		}
 	}
 
-	if opts.Type == bimg.AVIF {
-		opts.Speed = 6
-		opts.Quality = 60
-	}
-
 	return opts
 }
