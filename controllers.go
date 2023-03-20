@@ -143,11 +143,13 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 	}
 
 	image, err := operation.Run(buf, opts)
+
+	// Ensure the Vary header is set when an error occurs
+	if vary != "" {
+		w.Header().Set("Vary", vary)
+	}
+
 	if err != nil {
-		// Ensure the Vary header is set when an error occurs
-		if vary != "" {
-			w.Header().Set("Vary", vary)
-		}
 		ErrorReply(r, w, NewError("Error while processing the image: "+err.Error(), http.StatusBadRequest), o)
 		return
 	}
@@ -162,12 +164,9 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 				w.Header().Set("Image-Width", strconv.Itoa(meta.Size.Width))
 				w.Header().Set("Image-Height", strconv.Itoa(meta.Size.Height))
 			}
-			w.Header().Set("X-Compression-Rate", fmt.Sprintf(`%.2f`, float64(len(image.Body))/float64(len(buf))))
 		}
 	}
-	if vary != "" {
-		w.Header().Set("Vary", vary)
-	}
+
 	_, _ = w.Write(image.Body)
 }
 
