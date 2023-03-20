@@ -94,6 +94,11 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 		}
 	}
 
+	// Use magick to process bmp image
+	if mimeType == "image/bmp" {
+		mimeType = "image/magick"
+	}
+
 	// Infer text/plain responses as potential SVG image
 	if strings.Contains(mimeType, "text/plain") && len(buf) > 8 {
 		if bimg.IsSVGImage(buf) {
@@ -150,11 +155,14 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 	// Expose Content-Length response header
 	w.Header().Set("Content-Length", strconv.Itoa(len(image.Body)))
 	w.Header().Set("Content-Type", image.Mime)
-	if image.Mime != "application/json" && o.ReturnSize {
-		meta, err := bimg.Metadata(image.Body)
-		if err == nil {
-			w.Header().Set("Image-Width", strconv.Itoa(meta.Size.Width))
-			w.Header().Set("Image-Height", strconv.Itoa(meta.Size.Height))
+	if image.Mime != "application/json" {
+		if o.ReturnSize {
+			meta, err := bimg.Metadata(image.Body)
+			if err == nil {
+				w.Header().Set("Image-Width", strconv.Itoa(meta.Size.Width))
+				w.Header().Set("Image-Height", strconv.Itoa(meta.Size.Height))
+			}
+			w.Header().Set("X-Compression-Rate", fmt.Sprintf(`%.2f`, float64(len(image.Body))/float64(len(buf))))
 		}
 	}
 	if vary != "" {
