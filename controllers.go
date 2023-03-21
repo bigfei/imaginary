@@ -165,6 +165,7 @@ func imageHandler(w http.ResponseWriter, r *http.Request, buf []byte, operation 
 				w.Header().Set("Image-Height", strconv.Itoa(meta.Size.Height))
 			}
 		}
+		w.Header().Set("X-Compression-Rate", fmt.Sprintf(`%.2f`, float64(len(image.Body))/float64(len(buf))))
 	}
 
 	_, _ = w.Write(image.Body)
